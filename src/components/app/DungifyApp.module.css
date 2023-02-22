@@ -1,0 +1,19 @@
+.canvas {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-surface-canvas);
+  /**
+    https://stackoverflow.com/questions/48124372/pointermove-event-not-working-with-touch-why-not
+
+    After a short period of time, the (mobile) browser will claim the pointermove event for "native" behavior like panning the page.
+
+    The designed, simple solution is to use the css property touch-action and set it to none on the container that has the event handler.
+   */
+  touch-action: none;
+}
+
+.renderer_svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}

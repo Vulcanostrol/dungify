@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    container_name: dungify-frontend
+    command: npm run dev
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/app
+      - .next:/app/.next
