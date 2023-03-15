@@ -1,0 +1,14 @@
+.layer_menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  /*transform: translateX(-50%);*/
+  padding: 8px;
+  background: var(--color-foreground-500);
+  border-radius: 8px;
+
+  box-shadow: var(--shadow-popup);
+
+  color: var(--color-foreground-100);
+}

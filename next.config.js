@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   webpackDevMiddleware: (config) => {
     // Solve compiling problem via vagrant
     config.watchOptions = {

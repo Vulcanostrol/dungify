@@ -14,7 +14,7 @@ type Props = {
 export default function ImageDropHandler({onCancel, onDone}: Props) {
 
   const insertLayer = useMutation(
-    ({storage}, imageLocation: string) => {
+    ({storage}, imageLocation: string, width: number, height: number) => {
       const objectMap = storage.get("objects");
       const topLevelGroup = storage.get("topLevelGroup");
       const objectId = nanoid();
@@ -22,13 +22,13 @@ export default function ImageDropHandler({onCancel, onDone}: Props) {
         type: LayerType.Token,
         x: 0,
         y: 0,
-        height: 100,
-        width: 100,
         href: imageLocation,
+        width,
+        height,
       });
       topLevelGroup.get("layers").push(new LiveObject({
         type: "LAYER",
-        name: "Layer 2.0!",
+        name: "Layer",
         object: objectId,
       }));
       objectMap.set(objectId, object);
@@ -57,7 +57,7 @@ export default function ImageDropHandler({onCancel, onDone}: Props) {
     if (response.result === "ERROR") return; // TODO: Silent failure.
     const objectLocationResult = await preSignedImageLocationFromKey(response.key);
     if (objectLocationResult.result === "ERROR") return; // TODO: Silent failure.
-    insertLayer(objectLocationResult.url);
+    insertLayer(objectLocationResult.url, response.dimensions.width, response.dimensions.height);
     if (onDone) onDone(e);
   }, [insertLayer, onDone]);
 

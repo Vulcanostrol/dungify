@@ -13,7 +13,9 @@ export default function Grid({size, camera}: Props) {
           <path d={`M ${size * camera.zoom} 0 L 0 0 0 ${size * camera.zoom}`} fill="none" stroke="gray" strokeWidth="1"/>
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect style={{
+        pointerEvents: "none",
+      }} width="100%" height="100%" fill="url(#grid)" />
     </>
   );
 }

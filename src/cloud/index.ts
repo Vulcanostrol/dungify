@@ -1,6 +1,21 @@
 import axios from "axios";
+import {Dimensions} from "@/types";
 
 type ObjectKey = string;
+
+export async function imageDimensions(file: File): Promise<Dimensions> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      resolve({
+        width: image.width,
+        height: image.height,
+      });
+    };
+    setTimeout(() => reject(new Error("Took too long to find image's dimensions (10s).")), 10000);
+    image.src = URL.createObjectURL(file);
+  });
+}
 
 export function imageLocationFromKey(key: ObjectKey): string {
   return `https://ixa6abwp40.execute-api.eu-central-1.amazonaws.com/production/${key}`;
@@ -39,6 +54,7 @@ type PreSignedUploadResponse = {
 
 type UploadImageToCloudFunctionResponse = {
   result: "SUCCESS",
+  dimensions: Dimensions,
   key: ObjectKey,
 } | {
   result: "ERROR",
@@ -67,8 +83,10 @@ export async function uploadImageToCloud(file: File): Promise<UploadImageToCloud
     result: "ERROR",
     error: new Error("Failed to upload image to S3 with pre-signed URL."),
   }
+  const dimensions = await imageDimensions(file);
   return {
     result: "SUCCESS",
+    dimensions,
     key,
   };
 }

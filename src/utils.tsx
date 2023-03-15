@@ -56,8 +56,10 @@ export function testPointForLayer(
   group: ToImmutable<LayerGroup>,
   objects: ReadonlyMap<Identifier, LayerObject>,
   point: Point,
+  ignoreLockedLayers: boolean = true,
 ): Identifier | null {
-  const objectList = layerGroupToLayerList(group).map<Identifier>((layer) => layer.object);
+  const filteredList = ignoreLockedLayers ? layerGroupToLayerList(group).filter((layer) => !layer.locked) : layerGroupToLayerList(group);
+  const objectList = filteredList.map<Identifier>((layer) => layer.object);
   return findIntersectingObjectWithPoint(objectList, objects, point);
 }
 

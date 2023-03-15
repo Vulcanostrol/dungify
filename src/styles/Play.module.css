@@ -3,7 +3,7 @@
   inset: 0;
   --color-surface-canvas: #333;
   --color-surface-panel: #fff;
-  --color-surface-subtle: #f3f3f3;
+  --color-surface-subtle: #3f3f3f;
   --color-divider: #eee;
   --color-foreground-600: #333;
   --color-foreground-500: #444;
@@ -11,7 +11,7 @@
   --color-foreground-300: #666;
   --color-foreground-200: #888;
   --color-foreground-100: #999;
-  --color-primary: #0044ff;
+  --color-primary: #4070ff;
   --color-white: #fff;
   --shadow-popup: 0px 2px 4px rgba(0, 0, 0, 0.1),
   0px 0px 0px 1px rgba(0, 0, 0, 0.05);
