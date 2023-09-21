@@ -2,10 +2,15 @@ import styles from "./LayerMenu.module.css";
 import {DragDropContext, Droppable, DropResult} from 'react-beautiful-dnd';
 import {useMutation, useStorage} from "../../../../../liveblocks.config";
 import {ToImmutable} from "@liveblocks/core";
-import {Layer, LayerGroup} from "@/types";
+import {DmLayerBoundary, Layer, LayerGroup, LayerListType, LayerType} from "@/types";
 import LayerMenuLayerItem from "@/components/app/toolbar/layers/LayerMenuLayerItem";
+import LayerMenuDmBoundaryItem from "@/components/app/toolbar/layers/LayerMenuDmBoundaryItem";
 
-export default function LayerMenu() {
+type Props = {
+  setDmLayersOpacity: (value: number) => void,
+}
+
+export default function LayerMenu(props: Props) {
   const topLevelGroup = useStorage((root) => root.topLevelGroup);
 
   const onDragEnd = useMutation(({storage}, result: DropResult) => {
@@ -19,7 +24,6 @@ export default function LayerMenu() {
   const getListStyle = (isDraggingOver: boolean) => ({
     background: isDraggingOver ? "lightblue" : "lightgrey",
     padding: grid,
-    width: 250
   });
 
   return (
@@ -34,12 +38,12 @@ export default function LayerMenu() {
               ref={provided.innerRef}
               style={getListStyle(snapshot.isDraggingOver)}
             >
-              {topLevelGroup.layers.map((item: ToImmutable<Layer> | ToImmutable<LayerGroup>, index) => {
+              {topLevelGroup.layers.map((item: ToImmutable<Layer> | ToImmutable<LayerGroup> | ToImmutable<DmLayerBoundary>, idx: number) => {
                 switch (item.type) {
                   case "LAYER":
-                    return (
-                      <LayerMenuLayerItem key={item.object} item={item} index={index} />
-                    );
+                    return <LayerMenuLayerItem key={item.object} item={item} index={idx} />;
+                  case "DM_BOUNDARY":
+                    return <LayerMenuDmBoundaryItem key="dm-layer-boundary" index={idx} setDmLayersOpacity={props.setDmLayersOpacity} />;
                   default:
                     return null;
                 }

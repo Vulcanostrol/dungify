@@ -12,3 +12,44 @@
 
   color: var(--color-foreground-100);
 }
+
+.layer_item {
+  position: relative;
+  height: 30px;
+  width: 300px;
+  background-color: var(--color-foreground-600) !important;
+}
+
+.layer_dm_boundary_item {
+  padding: 4px;
+  color: var(--color-foreground-500) !important;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.layer_dm_boundary_item > input {
+  margin-left: 16px;
+  transform: translateY(2px);
+}
+
+.layer_name {
+  top: 50%;
+  position: absolute;
+  height: 30px;
+  width: calc(100% - 116px);
+  transform: translateY(-50%);
+}
+
+.layer_delete {
+  top: 50%;
+  right: 48px;
+  position: absolute;
+  transform: translateY(-50%);
+}
+
+.layer_lock {
+  top: 50%;
+  right: 8px;
+  position: absolute;
+  transform: translateY(-50%);
+}

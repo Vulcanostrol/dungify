@@ -1,10 +1,11 @@
+import styles from "./LayerMenu.module.css";
 import {ToImmutable} from "@liveblocks/core";
 import {Draggable, DraggingStyle, NotDraggingStyle} from "react-beautiful-dnd";
 import {Layer} from "@/types";
 import React, {CSSProperties} from "react";
 import {useMutation, useStorage} from "../../../../../liveblocks.config";
-import DeleteButton from "@/components/app/toolbar/DeleteButton";
-import LockButton from "@/components/app/toolbar/LockButton";
+import DeleteButton from "@/components/app/toolbar/layers/DeleteButton";
+import LockButton from "@/components/app/toolbar/layers/LockButton";
 
 type Props = {
   item: ToImmutable<Layer>,
@@ -12,8 +13,7 @@ type Props = {
 }
 
 export default function LayerMenuLayerItem({item, index}: Props) {
-  const layerLocked = useStorage((root) => root.topLevelGroup.layers[index].locked);
-
+  const layerIsLocked = useStorage((root) => root.topLevelGroup.layers[index].locked);
   const grid = 8;
 
   const getItemStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined): CSSProperties | undefined => ({
@@ -43,9 +43,9 @@ export default function LayerMenuLayerItem({item, index}: Props) {
 
   const lockThisLayer = useMutation(({storage}) => {
     storage.get("topLevelGroup").get("layers").get(index)?.update({
-      locked: !layerLocked,
+      locked: !layerIsLocked,
     });
-  }, [index, layerLocked]);
+  }, [index, layerIsLocked]);
 
   return (
     <Draggable draggableId={item.object} index={index}>
@@ -54,14 +54,15 @@ export default function LayerMenuLayerItem({item, index}: Props) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          className={styles.layer_item}
           style={getItemStyle(
           snapshot.isDragging,
           provided.draggableProps.style
           )}
         >
-          <input type="text" value={item.name} onChange={onChange} />
+          <input className={styles.layer_name} type="text" value={item.name} onChange={onChange} />
           <DeleteButton isActive={false} onClick={deleteThisLayer} />
-          <LockButton isActive={layerLocked} onClick={lockThisLayer} />
+          <LockButton isActive={layerIsLocked} onClick={lockThisLayer} />
         </div>
       )}
     </Draggable>

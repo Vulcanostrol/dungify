@@ -1,10 +1,10 @@
 import {
   Color,
   Side,
-  LayerType,
+  LayerObjectTypes,
   Point,
   XYWH,
-  Camera, LayerObject, LayerGroup, Layer, Identifier,
+  Camera, LayerObject, LayerGroup, Layer, Identifier, LayerType,
 } from "./types";
 import React from "react";
 import {ToImmutable} from "@liveblocks/core";
@@ -57,9 +57,10 @@ export function testPointForLayer(
   objects: ReadonlyMap<Identifier, LayerObject>,
   point: Point,
   ignoreLockedLayers: boolean = true,
+  dungeonMaster: boolean = false,
 ): Identifier | null {
-  const filteredList = ignoreLockedLayers ? layerGroupToLayerList(group).filter((layer) => !layer.locked) : layerGroupToLayerList(group);
-  const objectList = filteredList.map<Identifier>((layer) => layer.object);
+  const filteredList = ignoreLockedLayers ? layerGroupToLayerList(group, dungeonMaster).filter(({layer}) => !layer.locked) : layerGroupToLayerList(group);
+  const objectList = filteredList.map<Identifier>(({layer}) => layer.object);
   return findIntersectingObjectWithPoint(objectList, objects, point);
 }
 
@@ -80,9 +81,9 @@ export function findIntersectingObjectWithPoint(
 
 export function isHittingLayer(layerObject: LayerObject, point: Point) {
   switch (layerObject.type) {
-    case LayerType.Rectangle:
+    case LayerObjectTypes.Rectangle:
       return isHittingRectangle(layerObject, point);
-    case LayerType.Token:
+    case LayerObjectTypes.Token:
       return isHittingRectangle(layerObject, point);
     default:
       return false;
@@ -100,13 +101,20 @@ export function isHittingRectangle(layer: XYWH, point: Point) {
 
 export function layerGroupToLayerList(
   group: ToImmutable<LayerGroup>,
-): Array<ToImmutable<Layer>> {
-  const result: Array<ToImmutable<Layer>> = [];
-  group.layers.forEach((layer: ToImmutable<Layer> | ToImmutable<LayerGroup>) => {
-    if (layer.type === "LAYER") {
-      result.push(layer);
-    } else {
-      result.push(...layerGroupToLayerList(layer));
+  dungeonMasterMode = false,
+  passedDmBoundary = false,
+): Array<{layer: ToImmutable<Layer>, dm: boolean}> {
+  const result: Array<{layer: ToImmutable<Layer>, dm: boolean}> = [];
+  let passedDmLayerBoundary = false;
+  group.layers.forEach((layer: ToImmutable<LayerType>) => {
+    if (dungeonMasterMode || !passedDmLayerBoundary) {
+      if (layer.type === "LAYER") {
+        result.push({layer, dm: passedDmLayerBoundary});
+      } else if (layer.type === "DM_BOUNDARY") {
+        passedDmLayerBoundary = true;
+      } else if (layer.type === "GROUP") {
+        result.push(...layerGroupToLayerList(layer, dungeonMasterMode, passedDmBoundary));
+      }
     }
   });
   return result;

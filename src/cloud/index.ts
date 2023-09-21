@@ -18,7 +18,7 @@ export async function imageDimensions(file: File): Promise<Dimensions> {
 }
 
 export function imageLocationFromKey(key: ObjectKey): string {
-  return `https://ixa6abwp40.execute-api.eu-central-1.amazonaws.com/production/${key}`;
+  return `https://iyfgfpi6c4.execute-api.eu-central-1.amazonaws.com/production/${key}`;
 }
 
 type PresSignedImageDownloadResponse = {
@@ -63,7 +63,7 @@ type UploadImageToCloudFunctionResponse = {
 
 export async function uploadImageToCloud(file: File): Promise<UploadImageToCloudFunctionResponse> {
   const preSignedResponse = await axios.get<PreSignedUploadResponse>(
-    `https://ixa6abwp40.execute-api.eu-central-1.amazonaws.com/production/upload`,
+    `https://iyfgfpi6c4.execute-api.eu-central-1.amazonaws.com/production/upload`,
   );
   if (preSignedResponse.status !== 200) return {
     result: "ERROR",

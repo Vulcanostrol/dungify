@@ -11,3 +11,33 @@
   content: '🖼️';
   font-size: 64px;
 }
+
+.loading_bar {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  width: 200px;
+  height: 20px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: #F1F1F1;
+  transform: translateX(-50%);
+}
+
+.progress_bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #2196F3;
+  transition: width .1s ease-in-out;
+}
+
+.progress_bar > p {
+  margin: 0;
+  text-align: center;
+}
+
+.progress_bar.error {
+  background-color: #F32121;
+}

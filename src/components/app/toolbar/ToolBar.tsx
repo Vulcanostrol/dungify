@@ -21,21 +21,14 @@ type Props = {
   updateFogOfWar: (polygon: Polygon, adding: boolean) => void,
   fowOpacity: number,
   setFowOpacity: (opacity: number) =>  void,
+  dungeonMaster: boolean,
+  setDungeonMaster: (dungeonMaster: boolean) =>  void,
+  setDmLayersOpacity: (value: number) => void,
 }
 
-export default function ToolBar({
-                                  snapToGrid,
-                                  switchSnapToGrid,
-                                  showResize,
-                                  switchShowResize,
-                                  canvasState,
-                                  setCanvasState,
-                                  updateFogOfWar,
-                                  fowOpacity,
-                                  setFowOpacity}: Props) {
+export default function ToolBar(props: Props) {
   const cursorState = useSelf((me) => me.presence.state);
   const [layerMenuOpen, setLayerMenuOpen] = useState<boolean>(false);
-  const [dungeonMaster, setDungeonMaster] = useState<boolean>(false);
 
   const onCursorButtonClick = useMutation(({setMyPresence}) => {
     switch (cursorState) {
@@ -55,51 +48,49 @@ export default function ToolBar({
   }, [cursorState]);
 
   const switchDungeonMaster = useCallback(() => {
-    if (dungeonMaster) {
+    if (props.dungeonMaster) {
       setLayerMenuOpen(false);
-      setFowOpacity(1.0);
-      if (showResize) {
-        switchShowResize();
+      props.setFowOpacity(1.0);
+      if (props.showResize) {
+        props.switchShowResize();
       }
     }
-    setDungeonMaster(!dungeonMaster);
-  }, [dungeonMaster, setDungeonMaster, setFowOpacity, setLayerMenuOpen, showResize, switchShowResize]);
+    props.setDungeonMaster(!props.dungeonMaster);
+  }, [props]);
 
   const switchLayerMenuOpen = useCallback(() => {
     setLayerMenuOpen(!layerMenuOpen);
   }, [layerMenuOpen, setLayerMenuOpen]);
 
   const switchFogOfWar = useCallback(() => {
-    if (canvasState.mode === CanvasMode.FogOfWar) {
-      const region = canvasState.region;
+    if (props.canvasState.mode === CanvasMode.FogOfWar) {
+      const region = props.canvasState.region;
       const polygon = {
         regions: [region],
         inverted: false,
       }
-      updateFogOfWar(polygon, false);
+      props.updateFogOfWar(polygon, false);
 
-      setCanvasState({
+      props.setCanvasState({
         mode: CanvasMode.None,
       });
-    } else if (canvasState.mode === CanvasMode.None) {
-      setCanvasState({
+    } else if (props.canvasState.mode === CanvasMode.None) {
+      props.setCanvasState({
         mode: CanvasMode.FogOfWar,
         region: [],
       });
     }
-  }, [canvasState, setCanvasState, updateFogOfWar])
+  }, [props]);
 
   const switchFowOpacity = useCallback(() => {
-    if (fowOpacity < 0.3) {
-      setFowOpacity(1.0);
-    } else if (fowOpacity < 0.6) {
-      setFowOpacity(0.2);
-    } else if (fowOpacity < 1.0) {
-      setFowOpacity(0.3);
-    } else {
-      setFowOpacity(0.6);
+    if (props.fowOpacity <= 0.1) {
+      props.setFowOpacity(1.0);
+    } else if (props.fowOpacity <= 0.3) {
+      props.setFowOpacity(0.1);
+    } else if (props.fowOpacity <= 1.0) {
+      props.setFowOpacity(0.3);
     }
-  }, [fowOpacity, setFowOpacity])
+  }, [props]);
 
   return (
     <>
@@ -107,18 +98,18 @@ export default function ToolBar({
         className={styles.tool_bar}
       >
         <CursorButton isActive={cursorState === CursorState.SHOWN} onClick={onCursorButtonClick} />
-        <DungeonMasterButton isActive={dungeonMaster} onClick={switchDungeonMaster}/>
-        {dungeonMaster && <>
+        <DungeonMasterButton isActive={props.dungeonMaster} onClick={switchDungeonMaster}/>
+        {props.dungeonMaster && <>
           <LayerButton isActive={layerMenuOpen} onClick={switchLayerMenuOpen} />
           <div className={styles.separator}></div>
-          <ResizeButton isActive={showResize} onClick={switchShowResize} />
-          <GridButton isActive={snapToGrid} onClick={switchSnapToGrid} />
+          <ResizeButton isActive={props.showResize} onClick={props.switchShowResize} />
+          <GridButton isActive={props.snapToGrid} onClick={props.switchSnapToGrid} />
           <div className={styles.separator}></div>
-          <FogOfWarButton isActive={canvasState.mode === CanvasMode.FogOfWar} onClick={switchFogOfWar} />
-          <FowOpacityButton isActive={fowOpacity < 1.0} onClick={switchFowOpacity} />
+          <FogOfWarButton isActive={props.canvasState.mode === CanvasMode.FogOfWar} onClick={switchFogOfWar} />
+          <FowOpacityButton isActive={props.fowOpacity < 1.0} onClick={switchFowOpacity} />
         </>}
       </div>
-      {layerMenuOpen && <LayerMenu />}
+      {layerMenuOpen && <LayerMenu setDmLayersOpacity={props.setDmLayersOpacity} />}
     </>
   );
 }

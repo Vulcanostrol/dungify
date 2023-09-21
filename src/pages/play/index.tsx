@@ -1,5 +1,5 @@
 import {RoomProvider} from "liveblocks.config";
-import {CursorState, Identifier, Layer, LayerGroup, LayerObject, Polygon} from "@/types";
+import {CursorState, Identifier, Layer, LayerGroup, LayerObject, LayerType, Polygon} from "@/types";
 import {LiveList, LiveMap, LiveObject} from "@liveblocks/client";
 import Loading from "@/components/app/Loading";
 import DungifyApp from "@/components/app/DungifyApp";
@@ -17,12 +17,17 @@ export default function Play() {
       }}
       initialStorage={{
         objects: new LiveMap<string, LiveObject<LayerObject>>(),
-        topLevelGroup: new LiveObject<{type: "GROUP", id: Identifier, name: string, layers: LiveList<Layer | LayerGroup>}>({
+        topLevelGroup: new LiveObject<{type: "GROUP", name: string, id: Identifier, locked: boolean, layers: LiveList<LayerType>}>({
           type: "GROUP",
-          id: "top-level-group",
           name: "Top-level Group",
-          layers: new LiveList<Layer | LayerGroup>(),
+          id: "top-level-group",
+          locked: false,
+          layers: new LiveList<LayerType>([new LiveObject({
+            type: "DM_BOUNDARY",
+            locked: true,
+          })]),
         }),
+        dmLayerStart: 0,
         fogOfWar: new LiveObject<Polygon>({
           regions: [
             [[0, 0], [0, 5000], [5000, 5000], [5000, 0]],

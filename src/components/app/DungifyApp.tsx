@@ -6,8 +6,6 @@ import {
   CanvasState,
   CursorState,
   Identifier,
-  Layer,
-  LayerGroup,
   LayerObject,
   Point, Polygon,
   Side,
@@ -17,8 +15,6 @@ import Grid from "@/components/app/Grid";
 import {pointerEventToWorldPoint, resizeBounds, testPointForLayer, zoomCamera} from "@/utils";
 import ImageDropHandler from "@/components/app/ImageDropHandler";
 import {useMutation, useSelf, useStorage} from "liveblocks.config";
-import TokenObject from "@/components/app/TokenObject";
-import {ToImmutable} from "@liveblocks/core";
 import {LiveMap, LiveObject} from "@liveblocks/client";
 import SelectionBox from "@/components/app/SelectionBox";
 import ToolBar from "@/components/app/toolbar/ToolBar";
@@ -26,24 +22,31 @@ import FogOfWarLayer from "@/components/app/FogOfWarLayer";
 // TODO: Typing might come out for this.
 // @ts-ignore
 import PolyBool from "polybooljs";
+import {roundToMultiple} from "@/util";
+import ObjectRenderer from "@/components/app/ObjectRenderer";
+
+const GRID_SIZE = 100;
 
 export default function DungifyApp() {
+
   const topLevelGroup = useStorage((root) => root.topLevelGroup);
   const fogOfWarPolygon = useStorage((root) => root.fogOfWar);
   const selection = useSelf((me) => me.presence.selection);
 
   const [camera, setCamera] = useState<Camera>({x: 0, y: 0, zoom: 1});
   const [canvasState, setCanvasState] = useState<CanvasState>({mode: CanvasMode.None});
-  const [pointer, setPointer] = useState<Point>({x: 0, y: 0});
 
   const [snapToGrid, setSnapToGrid] = useState<boolean>(false);
   const [showResize, setShowResize] = useState<boolean>(false);
 
   const [fowOpacity, setFowOpacity] = useState<number>(1.0);
+  const [dungeonMaster, setDungeonMaster] = useState<boolean>(false);
+
+  const [dmLayersOpacity, setDmLayersOpacity] = useState<number>(0.5);
 
   /*
- * Resizing tokens.
- */
+   * Resizing tokens.
+   */
 
   const onResizeHandlePointerDown = useCallback(
     (corner: Side, initialBounds: XYWH) => {
@@ -64,13 +67,19 @@ export default function DungifyApp() {
         canvasState.corner,
         point,
       );
+      if (snapToGrid) {
+        bounds.x = roundToMultiple(bounds.x, GRID_SIZE);
+        bounds.y = roundToMultiple(bounds.y, GRID_SIZE);
+        bounds.width = roundToMultiple(bounds.width, GRID_SIZE);
+        bounds.height = roundToMultiple(bounds.height, GRID_SIZE);
+      }
 
       const objects = storage.get("objects");
       const object = objects.get(self.presence.selection);
       if (object) {
         object.update(bounds);
       }
-    },[canvasState],
+    },[canvasState.mode],
   );
 
   /*
@@ -87,7 +96,7 @@ export default function DungifyApp() {
 
     if (e.button === 0) {
       const objects = storage.get("objects").toImmutable();
-      const result = testPointForLayer(topLevelGroup, objects, pointInWorld);
+      const result = testPointForLayer(topLevelGroup, objects, pointInWorld, true, dungeonMaster);
       setMyPresence({
         selection: result,
       });
@@ -108,7 +117,6 @@ export default function DungifyApp() {
   const onPointerMove = useMutation(({storage, setMyPresence}, e: React.PointerEvent) => {
     const pointOnScreen = {x: e.clientX, y: e.clientY};
     const pointInWorld = pointerEventToWorldPoint(e, camera);
-    setPointer(pointInWorld);
     if (canvasState.mode === CanvasMode.Panning) {
       setCamera({
         ...camera,
@@ -140,10 +148,23 @@ export default function DungifyApp() {
         y: pointInWorld.y,
       },
     });
-  }, [camera, setCamera, canvasState, setCanvasState, setPointer, selection, resizeSelectedLayer]);
+  }, [camera, setCamera, canvasState, setCanvasState, selection, resizeSelectedLayer, snapToGrid]);
 
-  const onPointerUp = useMutation(() => {
-    if (canvasState.mode !== CanvasMode.FogOfWar) {
+  const onPointerUp = useMutation(({storage}) => {
+    if (canvasState.mode === CanvasMode.Translating) {
+      const objects = storage.get("objects");
+      if (!selection) return;
+      const object = objects.get(selection);
+      if (!object) return;
+      const currentObjectX = object.get("x");
+      const currentObjectY = object.get("y");
+      const newObjectX = snapToGrid ? roundToMultiple(currentObjectX, GRID_SIZE) : currentObjectX;
+      const newObjectY = snapToGrid ? roundToMultiple(currentObjectY, GRID_SIZE) : currentObjectY;
+      object.update({x: newObjectX, y: newObjectY});
+      setCanvasState({
+        mode: CanvasMode.None,
+      });
+    } else if (canvasState.mode !== CanvasMode.FogOfWar) {
       setCanvasState({
         mode: CanvasMode.None,
       });
@@ -247,23 +268,12 @@ export default function DungifyApp() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case "c": {
-          switchCursor();
-          break;
-        }
-        case "g": {
-          switchGridSnap();
-          break;
-        }
-        case "r": {
-          switchResize();
-          break;
-        }
-        case "f": {
-          resetFogOfWar();
-          break;
-        }
+      if (e.shiftKey && e.key === "G") {
+        switchGridSnap();
+      } else if (e.shiftKey && e.key === "R") {
+        switchResize();
+      } else if (e.shiftKey && e.key === "D") {
+        deleteLayers();
       }
     }
 
@@ -297,18 +307,19 @@ export default function DungifyApp() {
           onDragEnter={onDragEnter}
           preserveAspectRatio="none"
         >
-          <Grid size={100} camera={camera}/>
+          <Grid size={GRID_SIZE} camera={camera}/>
           <g
             style={{
               transform: `translate(${-camera.x}px, ${-camera.y}px) scale(${camera.zoom})`,
             }}
           >
-            {topLevelGroup.layers.map((layer: ToImmutable<Layer> | ToImmutable<LayerGroup>) => {
-              const objectId: Identifier = (layer as ToImmutable<Layer>).object;
-              return <TokenObject key={objectId} objectId={objectId}/>
-            })}
+            <ObjectRenderer
+              topLevelGroup={topLevelGroup}
+              dungeonMaster={dungeonMaster}
+              dmLayersOpacity={dmLayersOpacity}
+            />
             {showResize && <SelectionBox
-                onResizeHandlePointerDown={onResizeHandlePointerDown}
+              onResizeHandlePointerDown={onResizeHandlePointerDown}
             />}
             <FogOfWarLayer
               polygon={fogOfWarPolygon}
@@ -317,10 +328,10 @@ export default function DungifyApp() {
           </g>
         </svg>
         {canvasState.mode === CanvasMode.Inserting &&
-        <ImageDropHandler
+          <ImageDropHandler
             onCancel={onDragExit}
             onDone={onDragExit}
-        />
+          />
         }
         <ToolBar
           snapToGrid={snapToGrid}
@@ -332,6 +343,9 @@ export default function DungifyApp() {
           updateFogOfWar={updateFogOfWar}
           fowOpacity={fowOpacity}
           setFowOpacity={setFowOpacity}
+          dungeonMaster={dungeonMaster}
+          setDungeonMaster={setDungeonMaster}
+          setDmLayersOpacity={setDmLayersOpacity}
         />
       </div>
     </>

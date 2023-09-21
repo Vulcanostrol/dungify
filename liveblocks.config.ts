@@ -15,6 +15,7 @@ type Presence = {
 type Storage = {
   objects: LiveMap<Identifier, LiveObject<LayerObject>>,
   topLevelGroup: LayerGroup,
+  dmLayerStart: number,
   fogOfWar: LiveObject<Polygon>,
 };
 

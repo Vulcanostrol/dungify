@@ -15,13 +15,13 @@ export enum CursorState {
  * Layer types
  */
 
-export enum LayerType {
+export enum LayerObjectTypes {
   Rectangle,
   Token,
 }
 
-export type RectangleObject = {
-  type: LayerType.Rectangle,
+export type RectangleLayerObject = {
+  type: LayerObjectTypes.Rectangle,
   x: number,
   y: number,
   height: number,
@@ -29,18 +29,24 @@ export type RectangleObject = {
   fill: Color,
 };
 
-export type TokenObject = {
-  type: LayerType.Token,
+export type TokenLayerObject = {
+  type: LayerObjectTypes.Token,
   x: number,
   y: number,
   height: number,
   width: number,
   href: string,
+  key: string,
 };
 
 export type Identifier = string;
 
-export type LayerObject = RectangleObject | TokenObject;
+export type LayerObject = RectangleLayerObject | TokenLayerObject;
+
+export type DmLayerBoundary = LiveObject<{
+  type: "DM_BOUNDARY",
+  locked: boolean,
+}>;
 
 export type Layer = LiveObject<{
   type: "LAYER",
@@ -53,8 +59,13 @@ export type LayerGroup = LiveObject<{
   type: "GROUP",
   name: string,
   id: Identifier,
-  layers: LiveList<Layer | LayerGroup>,
+  locked: boolean,
+  layers: LayerListType,
 }>;
+
+export type LayerType = Layer | LayerGroup | DmLayerBoundary;
+
+export type LayerListType = LiveList<LayerType>;
 
 export type Point = {
   x: number,
